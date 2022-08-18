@@ -227,11 +227,7 @@ type Result struct {
 }
 
 func (r Result) Response() *http.Response {
-	if r.response == nil {
-		return new(http.Response)
-	}
-
-	return &**r.response
+	return *r.response
 }
 
 func (r Result) Raw() ([]byte, error) {
