@@ -130,7 +130,7 @@ func (r *Request) Do() Result {
 		client.SetBasicAuth(r.c.config.Username, r.c.config.Password)
 	}
 	resp, body, errs := client.CustomMethod(r.verb, r.URL().String()).Send(r.body).EndBytes()
-	if err := combineErr(resp.StatusCode, body, errs); err != nil {
+	if err := combineErr(resp, body, errs); err != nil {
 		return Result{
 			response: &resp,
 			err:      err,
@@ -154,7 +154,7 @@ func (r *Request) Param(params url.Values) *Request {
 	return r
 }
 
-func combineErr(statusCode int, body []byte, errs []error) error {
+func combineErr(resp gorequest.Response, body []byte, errs []error) error {
 	var e, sep string
 	if len(errs) > 0 {
 		for _, err := range errs {
@@ -164,7 +164,7 @@ func combineErr(statusCode int, body []byte, errs []error) error {
 		return errors.New(e)
 	}
 
-	if statusCode >= 400 {
+	if resp.StatusCode >= 400 {
 		return errors.New(string(body))
 	}
 
