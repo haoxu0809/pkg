@@ -227,6 +227,10 @@ type Result struct {
 }
 
 func (r Result) Response() *http.Response {
+	if *r.response == nil {
+		return &http.Response{}
+	}
+
 	return *r.response
 }
 

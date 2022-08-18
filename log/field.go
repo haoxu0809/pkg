@@ -14,24 +14,6 @@ type context struct {
 	response *response
 }
 
-type request struct {
-	Method string
-	Host   string
-	Path   string
-	Proto  string
-	Header http.Header
-	Form   url.Values
-	Body   any
-}
-
-type response struct {
-	Status     string
-	StatusCode int
-	Proto      string
-	Header     http.Header
-	Body       string
-}
-
 func (c *context) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	err := encoder.AddObject("request", c.request)
 	if err != nil {
@@ -42,6 +24,16 @@ func (c *context) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 		return err
 	}
 	return nil
+}
+
+type request struct {
+	Method string
+	Host   string
+	Path   string
+	Proto  string
+	Header http.Header
+	Form   url.Values
+	Body   any
 }
 
 func (r *request) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
@@ -64,6 +56,14 @@ func (r *request) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	return nil
 }
 
+type response struct {
+	Status     string
+	StatusCode int
+	Proto      string
+	Header     http.Header
+	Body       string
+}
+
 func (r *response) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	encoder.AddString("status", r.Status)
 	encoder.AddInt("status_code", r.StatusCode)
@@ -77,9 +77,6 @@ func (r *response) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 }
 
 func Context(body any, raw *http.Response) *context {
-	if raw == nil {
-		return &context{}
-	}
 	bytes, err := io.ReadAll(raw.Body)
 	if err != nil {
 		log.Printf("error reading response body: %s", err)
