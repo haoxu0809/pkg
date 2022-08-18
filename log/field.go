@@ -15,14 +15,17 @@ type context struct {
 }
 
 func (c *context) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
-	err := encoder.AddObject("request", c.request)
-	if err != nil {
-		return err
+	if c.request != nil {
+		if err := encoder.AddObject("request", c.request); err != nil {
+			return err
+		}
 	}
-	err = encoder.AddObject("response", c.response)
-	if err != nil {
-		return err
+	if c.response != nil {
+		if err := encoder.AddObject("response", c.response); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
@@ -41,6 +44,7 @@ func (r *request) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	encoder.AddString("host", r.Host)
 	encoder.AddString("path", r.Path)
 	encoder.AddString("proto", r.Proto)
+
 	err := encoder.AddReflected("header", r.Header)
 	if err != nil {
 		return err
@@ -53,6 +57,7 @@ func (r *request) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -69,10 +74,12 @@ func (r *response) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	encoder.AddInt("status_code", r.StatusCode)
 	encoder.AddString("proto", r.Proto)
 	encoder.AddString("body", r.Body)
+
 	err := encoder.AddReflected("header", r.Header)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -80,11 +87,13 @@ func Context(body any, raw *http.Response) *context {
 	if raw == nil || raw.Body == nil {
 		return &context{}
 	}
+
 	bytes, err := io.ReadAll(raw.Body)
 	if err != nil {
 		log.Printf("error reading response body: %s", err)
 		return &context{}
 	}
+
 	return &context{
 		request: &request{
 			Method: raw.Request.Method,
