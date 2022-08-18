@@ -77,10 +77,13 @@ func (r *response) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 }
 
 func Context(body any, raw *http.Response) *context {
+	if raw == nil {
+		return &context{}
+	}
 	bytes, err := io.ReadAll(raw.Body)
 	if err != nil {
 		log.Printf("error reading response body: %s", err)
-		return new(context)
+		return &context{}
 	}
 	return &context{
 		request: &request{
