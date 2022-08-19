@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -226,7 +228,7 @@ type Result struct {
 	body     []byte
 }
 
-func (r Result) Response() *http.Response {
+func (r *Result) Response() *http.Response {
 	if *r.response == nil {
 		return &http.Response{}
 	}
@@ -234,15 +236,24 @@ func (r Result) Response() *http.Response {
 	return *r.response
 }
 
-func (r Result) Raw() ([]byte, error) {
+func (r *Result) StatusCode() int {
+	if *r.response == nil {
+		return 0
+	}
+
+	response := *r.response
+	return response.StatusCode
+}
+
+func (r *Result) Raw() ([]byte, error) {
 	return r.body, r.err
 }
 
-func (r Result) Error() error {
+func (r *Result) Error() error {
 	return r.err
 }
 
-func (r Result) Into(v interface{}) error {
+func (r *Result) Into(v interface{}) error {
 	if r.err != nil {
 		return r.Error()
 	}
@@ -252,6 +263,34 @@ func (r Result) Into(v interface{}) error {
 	}
 
 	return nil
+}
+
+func (r *Result) Dump(requestBody ...any) *DumpContext {
+	var body any
+	if len(requestBody) > 0 {
+		body = requestBody[0]
+	}
+	var response *http.Response
+	if *r.response != nil {
+		response = *r.response
+	}
+
+	if response == nil || response.Body == nil {
+		return &DumpContext{}
+	}
+
+	bytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		log.Printf("error reading response body: %s", err)
+		return &DumpContext{}
+	}
+
+	request := response.Request
+
+	return &DumpContext{
+		dumpRequest:  &dumpRequest{Method: request.Method, Host: request.URL.Host, Path: request.URL.Path, Proto: request.Proto, Header: request.Header, Form: request.Form, Body: body},
+		dumpResponse: &dumpResponse{Status: response.Status, Proto: response.Proto, Header: response.Header, Body: string(bytes)},
+	}
 }
 
 func Decode(data []byte, v interface{}) error {
