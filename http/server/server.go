@@ -2,7 +2,12 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -15,40 +20,54 @@ type Options struct {
 
 type Server struct {
 	server          *http.Server
-	notify          chan error
+	notifyChan      chan error
 	shutdownTimeout time.Duration
 }
 
-func ListenAndServe(opts *Options, handler http.Handler) *Server {
+func Start(serve http.Handler, opts *Options) {
 	s := &http.Server{
-		Handler:      handler,
+		Handler:      serve,
 		Addr:         opts.Listen,
 		ReadTimeout:  opts.ReadTimeout,
 		WriteTimeout: opts.WriteTimeout,
 	}
 	server := &Server{
 		server:          s,
-		notify:          make(chan error, 1),
+		notifyChan:      make(chan error, 1),
 		shutdownTimeout: opts.ShutdownTimeout,
 	}
 
 	server.start()
 
-	return server
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	var err error
+
+	select {
+	case s := <-interrupt:
+		log.Print("app - Run - signal: " + s.String())
+	case err = <-server.notify():
+		log.Fatal(fmt.Errorf("app - Run - httpServer.notify: %w", err))
+	}
+
+	if err = server.shutdown(); err != nil {
+		log.Fatal(fmt.Errorf("app - Run - httpServer.shutdown: %w", err))
+	}
 }
 
 func (s *Server) start() {
 	go func() {
-		s.notify <- s.server.ListenAndServe()
-		close(s.notify)
+		s.notifyChan <- s.server.ListenAndServe()
+		close(s.notifyChan)
 	}()
 }
 
-func (s *Server) Notify() <-chan error {
-	return s.notify
+func (s *Server) notify() <-chan error {
+	return s.notifyChan
 }
 
-func (s *Server) Shutdown() error {
+func (s *Server) shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 	defer cancel()
 
