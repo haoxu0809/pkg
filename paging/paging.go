@@ -1,12 +1,10 @@
 package paging
 
 import (
-	"github.com/haoxu0809/pkg/meta"
-
 	"gorm.io/gorm"
 )
 
-func Transform(page, pageSize int) (int, int) {
+func Transform(page, pageSize int64) (int64, int64) {
 	if page <= 0 {
 		page = 1
 	}
@@ -20,9 +18,9 @@ func Transform(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func Paginate(opts *meta.ListOptions) func(db *gorm.DB) *gorm.DB {
+func Paginate(page, pageSize int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		page, pageSize := Transform(opts.Page, opts.PageSize)
-		return db.Offset((page - 1) * pageSize).Limit(pageSize)
+		page, pageSize := Transform(page, pageSize)
+		return db.Offset(int((page - 1) * pageSize)).Limit(int(pageSize))
 	}
 }

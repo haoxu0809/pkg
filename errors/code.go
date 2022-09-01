@@ -1,9 +1,7 @@
 package errors
 
 import (
-	"fmt"
 	"net/http"
-	"sync"
 )
 
 var (
@@ -64,57 +62,6 @@ func (coder defaultCoder) HTTPStatus() int {
 // Reference returns the reference document.
 func (coder defaultCoder) Reference() string {
 	return coder.Ref
-}
-
-// codes contains a map of error codes to metadata.
-var codes = map[int]Coder{}
-var codeMux = &sync.Mutex{}
-
-// Register register a user define error code.
-// It will overrid the exist code.
-func Register(coder Coder) {
-	if coder.Code() == 0 {
-		panic("code `0` is unknownCode error code")
-	}
-
-	codeMux.Lock()
-	defer codeMux.Unlock()
-
-	codes[coder.Code()] = coder
-}
-
-// MustRegister register a user define error code.
-// It will panic when the same Code already exist.
-func MustRegister(coder Coder) {
-	if coder.Code() == 0 {
-		panic("code '0' is ErrUnknown error code")
-	}
-
-	codeMux.Lock()
-	defer codeMux.Unlock()
-
-	if _, ok := codes[coder.Code()]; ok {
-		panic(fmt.Sprintf("code: %d already exist", coder.Code()))
-	}
-
-	codes[coder.Code()] = coder
-}
-
-// ParseCoder parse any error into *withCode.
-// nil error will return nil direct.
-// None withStack error will be parsed as ErrUnknown.
-func ParseCoder(err error) Coder {
-	if err == nil {
-		return nil
-	}
-
-	if v, ok := err.(*withCode); ok {
-		if coder, ok := codes[v.code]; ok {
-			return coder
-		}
-	}
-
-	return unknownCoder
 }
 
 func init() {

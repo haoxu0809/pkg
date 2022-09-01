@@ -2,7 +2,6 @@ package render
 
 import (
 	"github.com/haoxu0809/pkg/errors"
-	"github.com/haoxu0809/pkg/log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,7 +20,6 @@ func Serializer(ctx *gin.Context, err error, data any) {
 		obj["reference"] = coder.Reference()
 
 		httpCode = coder.HTTPStatus()
-		log.L().Error(err.Error())
 	}
 
 	ctx.JSON(httpCode, obj)

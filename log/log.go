@@ -5,9 +5,9 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var logger *zap.Logger
+type Logger zap.Logger
 
-func New(level string) {
+func NewLogger(level, encoding string) *Logger {
 	var lv zapcore.Level
 
 	switch level {
@@ -27,7 +27,7 @@ func New(level string) {
 		Level:             zap.NewAtomicLevelAt(lv), // 日志级别
 		Development:       false,                    // 开发模式，堆栈跟踪
 		DisableStacktrace: false,                    // 关闭自动堆栈捕获
-		Encoding:          "json",                   // 输出格式 console 或 json
+		Encoding:          encoding,                 // 输出格式 console 或 json
 		EncoderConfig: zapcore.EncoderConfig{
 			TimeKey:        "time",
 			LevelKey:       "level",
@@ -46,14 +46,10 @@ func New(level string) {
 		ErrorOutputPaths: []string{"stderr"},
 	}
 
-	l, err := logConfig.Build(zap.AddCallerSkip(1))
+	logger, err := logConfig.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		panic(err)
 	}
 
-	logger = l
-}
-
-func L() *zap.Logger {
-	return logger
+	return (*Logger)(logger)
 }

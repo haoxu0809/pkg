@@ -2,10 +2,10 @@ package meta
 
 import "gorm.io/plugin/soft_delete"
 
-type Entity struct {
-	Id        uint                  `json:"id" gorm:"primarykey"`
-	CreatedAt uint                  `json:"createdAt"`
-	UpdatedAt uint                  `json:"updatedAt"`
+type Model struct {
+	Id        int64                 `json:"id" gorm:"primarykey"`
+	CreatedAt int64                 `json:"createdAt"`
+	UpdatedAt int64                 `json:"updatedAt"`
 	DeletedAt soft_delete.DeletedAt `json:"-" gorm:"index"`
 }
 
