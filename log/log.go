@@ -5,9 +5,24 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type Logger zap.Logger
+type Logger interface {
+	Sugar() *zap.SugaredLogger
+	Named(s string) *zap.Logger
+	WithOptions(opts ...zap.Option) *zap.Logger
+	With(fields ...zap.Field) *zap.Logger
+	Check(lvl zapcore.Level, msg string) *zapcore.CheckedEntry
+	Log(lvl zapcore.Level, msg string, fields ...zap.Field)
+	Debug(msg string, fields ...zap.Field)
+	Info(msg string, fields ...zap.Field)
+	Warn(msg string, fields ...zap.Field)
+	Error(msg string, fields ...zap.Field)
+	DPanic(msg string, fields ...zap.Field)
+	Panic(msg string, fields ...zap.Field)
+	Fatal(msg string, fields ...zap.Field)
+	Sync() error
+}
 
-func NewLogger(level, encoding string) *Logger {
+func NewLogger(level, encoding string) *zap.Logger {
 	var lv zapcore.Level
 
 	switch level {
@@ -51,5 +66,5 @@ func NewLogger(level, encoding string) *Logger {
 		panic(err)
 	}
 
-	return (*Logger)(logger)
+	return logger
 }
