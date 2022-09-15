@@ -5,6 +5,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var l *zap.Logger
+
 type Logger interface {
 	Sugar() *zap.SugaredLogger
 	Named(s string) *zap.Logger
@@ -66,5 +68,11 @@ func NewLogger(level, encoding string) *zap.Logger {
 		panic(err)
 	}
 
+	l = logger
+
 	return logger
+}
+
+func L() *zap.Logger {
+	return l
 }
